@@ -1,0 +1,176 @@
+.title {
+    position: relative;  
+    font-size: 100px;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: oblique;
+    left: 2%;
+  }
+    
+  #square {
+    display: block;
+    position: relative;
+    top: 150px;
+    left: 150px;
+    width: 50px;
+    height: 75px;
+  }
+  
+  #car {
+    width: 75%;
+    height: auto;
+  }
+  
+  #hostButton {
+    border: 1px solid black;
+    border-radius: 2;
+    cursor: pointer;
+  }
+  
+  .menuButton {
+  display: block;
+  position: relative;
+  border: 2px solid black;
+  border-radius: 2px;
+  left: 2%;
+  width: 22%;
+  font-family: Arial, Helvetica, sans-serif; 
+  font-weight: bold;   
+  padding: 4px;
+  margin: 6px;
+  transform: skew(-11deg);
+  cursor: pointer;
+  background-color:rgb(245, 245, 245);
+  }
+  
+  .menuButton:hover {
+  font-weight: bold;
+  /* border-width: 2px; */
+  animation-name: menuButtonSlide;
+  animation-duration: 75ms;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  }
+  
+  @keyframes menuButtonSlide {
+  from {transform: translate(0px) skew(-11deg);} 
+  
+  to {transform: translate(21px) skew(-11deg);
+    box-shadow: -2px 0px 0px white, -4px 0px 0px rgba(0, 0, 0, 1), 
+    -6px 0px 0px white, -8px 0px 0px rgba(0, 0, 0, .8), -10px 0px 0px white, 
+    -12px 0px 0px rgba(0, 0, 0, .6), -14px 0px 0px white, -16px 0px 0px rgba(0, 0, 0, .4), 
+    -18px 0px 0px white, -20px 0px 0px rgba(0, 0, 0, .2);}
+  }
+  
+  #host {
+  display: inline-block;
+  font-weight: bold;
+  color: rgb(0, 0, 190);
+  }
+  
+  .redLetter {
+  position: absolute;
+  color: rgb(220, 0, 0);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  font-style: oblique;
+  font-weight: bold;
+  left: 2%;
+  }
+  
+  #displayGameCode {
+  position: relative;
+  border-bottom: 1px dashed black;
+  border-top: 1px dashed black;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 30px;
+  font-style: oblique;
+  left: 2%;
+  width: 96%;
+  padding: 2px 0px 0px 0px; 
+  } 
+  
+  .gameCode {
+  font-weight: bold;     
+  }
+  
+  .text {
+  position: relative;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  font-style: oblique;
+  font-weight: bold;
+  left: 2%;
+  }
+  
+  .smallText {
+    position: relative;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-style: oblique;
+    font-weight: bold;
+    left: 2%;
+    color: rgb(0, 180, 0);
+    margin-top: 5px;
+  }
+  
+  .playersContainer {
+  position: relative;
+  border-top: 1px dashed black;
+  border-bottom: 1px dashed black;
+  font-family: Arial, Helvetica, sans-serif;
+  padding:4px;
+  font-style: oblique;
+  font-size: 15px;
+  left: 2%;
+  width: 95%;
+  }
+  
+  #playGameButton {
+  color: rgb(0, 180, 0);
+  }
+  
+  #codeBox {
+    position: relative;
+    left: 2%;
+    margin-top: 10px;
+    margin-bottom: 30px;
+  }
+  
+  #changeNameForm {
+    position: absolute;
+    display: none;
+    right: 3%;
+  }
+  
+  #changeNameButton {
+    position: relative;
+    display: inline-block;
+    left: 2%;
+  }
+  .changeName {
+    cursor: pointer;
+    text-decoration: underline;
+    user-select: none;
+  }
+  
+  .changeName:hover {
+    color: rgb(0, 0, 190);
+  }
+  
+  .input {
+    border-width: 1px;
+    border-radius: 3px;
+    transform: skew(-11deg);
+  }
+  #maxPlayers {
+    display: none;
+    top: 2px;
+    left: 100px;
+  }
+  
+  #invalidCode {
+    display:none;
+    top: 187px;
+    left: 3%;
+  }
