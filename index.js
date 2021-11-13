@@ -4,39 +4,48 @@ const socketIO = require("socket.io")
 const morgan = require("morgan");
 
 let currentGames = {};
-let existingIDs = [];
 
-const createGameInstance = (gameID) => {
-    console.log("CREATE GAME CALLED");
-    currentGames[gameID] = [];
-    existingIDs.push(gameID);
-    console.log(currentGames);
+const randomId = () => {
+    let gameId = "";
+    for (let i = 0; i < 5; i++) {gameId += Math.floor(Math.random()*10)};
+    return gameId;
 }
 
-const addPlayer = (gameID, hostStatus, socketID) => {
-    const game = currentGames[gameID];
-    game.push({});
-    game[game.length-1].id = socketID;
-    game[game.length-1].isHost = hostStatus;
-    game[game.length-1].name = `Player${game.length}`;
-    return socketID;
+const createGame = () => {
+    gameId = randomId();
+    currentGames[gameId] = {
+        id: gameId,
+        players: []
+    };
+    return currentGames[gameId];
 };
 
-const removePlayer = (playerID, gameID) => {
-    console.log("REMOVE PLAYER CALLED");
-    for (let i = 0; i < currentGames[gameID].length; i++) {
-        console.log(currentGames[gameID][i]);
-        if (currentGames[gameID][i].id === playerID) {
-            currentGames[gameID].splice(i, 1);
-        }
-    }
-}
+const createPlayer = (game, socketId, hostStatus) => {
+    const position = currentGames[game.id].players.length;
+    const player = {
+        id: socketId,
+        position: position,
+        isHost: hostStatus,
+        name: `Player${position + 1}`,
+        html: ""
+    };
+    currentGames[game.id].players.push(player);
+    return player;
+};
 
-const checkForEmpty = (gameID) => {
-    if (currentGames[gameID].length === 0) {
-        delete currentGames[gameID];
+const removePlayer = (playerId, gameId) => {
+    for (let i = 0; i < currentGames[gameId].players.length; i++) {
+        if (currentGames[gameId].players[i].id === playerId) {
+            currentGames[gameId].players.splice(i, 1);
+        };
+    };
+};
+
+const removeGameIfEmpty = (gameId) => {
+    if (currentGames[gameId].players.length === 0) {
+        delete currentGames[gameId];
     }
-}
+};
 
 const app = express();
 
@@ -47,29 +56,52 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 io.on("connection", (socket) => {
+    console.log(`PLAYER HAS JOINED. PLAYER ID: ${socket.id}`);
+
+    socket.on("start-game", () => {
+        const game = createGame();
+        const player = createPlayer(game, socket.id, true);
+        
+        socket.join(game.id);
+        io.to(player.id).emit("game-started", game, player);
+        console.log(currentGames);
+    });
     
-    socket.on("join", (gameID, isHost) => {
-        // console.log(`SOCKET ID: ${socket.id}`);
-        if (isHost === true) {
-            socket.join(gameID);
-            createGameInstance(gameID);
-            const playerID = addPlayer(gameID, isHost, socket.id);
-            io.to(gameID).emit("join-return", currentGames[gameID], gameID, playerID);
-        } else if (isHost === false) {
-            for (let i = 0; i < existingIDs.length; i++) {
-                if (existingIDs[i] === gameID) {
-                    socket.join(gameID);
-                    const playerID = addPlayer(gameID, isHost, socket.id);
-                    io.to(gameID).emit("join-return", currentGames[gameID], gameID, playerID)
+    socket.on("join-request", (proposedId) => {
+            console.log(`PROPOSED ID: ${proposedId}`);
+            let foundMatch = false;
+            for (const gameIdKey in currentGames) { // fix this up XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                
+                if (foundMatch === false) {
+                    
+                    if (gameIdKey === proposedId) {
+                        foundMatch = true;
+                        socket.join(gameIdKey);
+                        const player = createPlayer(currentGames[gameIdKey], socket.id, false);
+                        
+                        console.log("FINDING 2 MATCHES?");
+                        io.to(player.id).emit("join-accepted", currentGames[gameIdKey], player)
+                        socket.to(gameIdKey).emit("new-player", player);
+                    };
+                } else {
+                    io.to(socket.id).emit("invalid-code");
+                    socket.disconnect();
+                    break;
                 };
+                
             };
-        };
     });
 
-    socket.on("leave", (gameID) => {
-        socket.leave(gameID);
-        removePlayer(socket.id, gameID);
-        checkForEmpty(gameID);
+    socket.on("leave-game", (gameId, player) => {
+        socket.leave(gameId);
+        socket.disconnect();
+        removePlayer(player.id, gameId);
+        removeGameIfEmpty(gameId);
+        if (currentGames[gameId]) {
+            // choose new host
+            io.to(gameId).emit("player-left", player.id);
+        };
+        
     });
 });
 
