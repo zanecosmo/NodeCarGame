@@ -15,8 +15,9 @@ const start = () => {
         const socketListeners = {
             newPlayer: (socket) => {
                 socket.on("new-player", (playerObject) => {
-                    console.log("WE HAVE RECEIVED WORD THAT THERE IS A NEW PLAYER");
+                    console.log(joinedGame.players);
                     joinedGame.players.push(playerObject);
+                    console.log(joinedGame.players);
                     updatePlayerHTML();
                     loadLobby(socket);
                 });
@@ -27,20 +28,60 @@ const start = () => {
                     joinedGame = game;
                     updatePlayerHTML();
                     loadLobby(socket);
+                    console.log("MADE IT THIS FAR");
+                    console.log(joinedGame.players);
                 });
             },
             playerLeft: (socket) => {
-                socket.on("player-left", (playerId) => {
+                socket.on("player-left", (playerArray, newHost) => {
+                    joinedGame.players = playerArray;
+                    
+                    if (newHost.id === self.id) {self.isHost = true};
+                    
+                    updatePlayerHTML();
+                    loadLobby(socket);
+                });
+            },
+            joinAccepted: (socket) => {
+                socket.on("join-accepted", (game, player) => {
+                    joinedGame = game;
+                    self = player;
+                    updatePlayerHTML();
+                    loadLobby(socket);
+                    
+                    socketListeners.newPlayer(socket);
+                    socketListeners.playerLeft(socket);
+                });
+            },
+            invalidCode : (socket) => {
+                socket.on("invalid-code", () => {
+                    tries++;
+                    loadJoinPage();
+                });
+            },
+            nameChangeIncoming: (socket) => {
+                socket.on("name-change-incoming", (newName, playerId) => {
                     for (let i = 0; i < joinedGame.players.length; i++) {
                         if (joinedGame.players[i].id === playerId) {
-                            joinedGame.players.splice(i, 1);
-                            updatePlayerHTML();
-                            loadLobby(socket);
+                            console.log(joinedGame.players);
+                            console.log(`MY ID IS ${self.id}`);
+                            // console.log(`INCOMING ID: ${playerId} player[i].id: ${joinedGame.players[i].id}`);
+                            joinedGame.players[i].name = newName;
+                            // console.log(`NEW NAME: ${joinedGame.players[i].name}`);
                             break;
                         };
                     };
+
+                    if (self.id === playerId) {self.name = newName};
+
+                    console.log(joinedGame.players);
+
+                    updatePlayerHTML();
+                    loadLobby(socket);
+                    console.log(joinedGame.players);
                 });
             },
+
         };
 
         renderPartial(
@@ -62,7 +103,6 @@ const start = () => {
                         <span id="changeButton" class="changeName">CHANGE</span>
                     </span>
                 `;
-                
                 player.html = 
                 `
                 <div>
@@ -78,13 +118,12 @@ const start = () => {
         };
 
         const loadLobby = (socket) => {
-            console.log('LOBBY LOADING TWICE?');
 
             const loadPlayerHTML = () => {
                 let playerHTML = "";
                 for (let i = 0; i < joinedGame.players.length; i++) {
                     playerHTML += joinedGame.players[i].html
-                }
+                };
                 return playerHTML;
             };
             
@@ -111,12 +150,16 @@ const start = () => {
             
             click(id('changeNameButton'), () => {
                 show(id('changeNameForm'));
-                hide(id('changeNameButton'))
+                hide(id('changeNameButton'));
             });
 
             click(id('changeButton'), () => {
                 show(id('changeNameButton'));
                 hide(id('changeNameForm'));
+                
+                const newName = id("changeNameBox").value;
+                if (newName === "") {newName = "anonymous"};
+                socket.emit("name-change-submit", newName, self.id, joinedGame.id);
             });
 
             if (id("playGameButton")) {
@@ -150,9 +193,7 @@ const start = () => {
             socketListeners.newPlayer(socket);
             socketListeners.gameStarted(socket);
             socketListeners.playerLeft(socket);
-            // socket.on("name-change", () => {
-
-            // });
+            socketListeners.nameChangeIncoming(socket);
             
             socket.emit("start-game"); 
         });
@@ -175,7 +216,7 @@ const start = () => {
                 <div id="joinLobbyButton" class="menuButton">Join</div>                
                 <div id="backButton" class="menuButton">Back</div>
                 `
-            );                
+            );
             
             if (tries > 0) show(id('invalidCode'));
             
@@ -186,20 +227,9 @@ const start = () => {
                 } else {
                     const socket = io();
 
-                    socket.on("join-accepted", (game, player) => {
-                        console.log(player.id);
-                        joinedGame = game;
-                        self = player;
-                        updatePlayerHTML();
-                        loadLobby(socket);
-                        socketListeners.newPlayer(socket);
-                        socketListeners.playerLeft(socket);
-                    });
-                    
-                    socket.on("invalid-code", () => {
-                        tries++;
-                        loadJoinPage();
-                    });
+                    socketListeners.joinAccepted(socket);
+                    socketListeners.invalidCode(socket);
+                    socketListeners.nameChangeIncoming(socket);
 
                     socket.emit("join-request", id("codeBox").value);
                 };
@@ -208,7 +238,7 @@ const start = () => {
             });
             
             click(id('backButton'), () => {
-                socket.disconnect();
+                socket.disconnect(); /////////////////////////////////////////////
                 renderDefaultPartial();
             });
         };

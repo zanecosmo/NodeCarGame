@@ -20,13 +20,20 @@ const createGame = () => {
     return currentGames[gameId];
 };
 
+const defaultNames = [
+    "Player1",
+    "Player2",
+    "Player3",
+    "Player4",
+];
+
 const createPlayer = (game, socketId, hostStatus) => {
     const position = currentGames[game.id].players.length;
     const player = {
         id: socketId,
         position: position,
         isHost: hostStatus,
-        name: `Player${position + 1}`,
+        name: defaultNames[position],
         html: ""
     };
     currentGames[game.id].players.push(player);
@@ -34,9 +41,10 @@ const createPlayer = (game, socketId, hostStatus) => {
 };
 
 const removePlayer = (playerId, gameId) => {
-    for (let i = 0; i < currentGames[gameId].players.length; i++) {
-        if (currentGames[gameId].players[i].id === playerId) {
-            currentGames[gameId].players.splice(i, 1);
+    const players = currentGames[gameId].players;
+    for (let i = 0; i < players.length; i++) {
+        if (players[i].id === playerId) {
+            players.splice(i, 1);
         };
     };
 };
@@ -44,7 +52,24 @@ const removePlayer = (playerId, gameId) => {
 const removeGameIfEmpty = (gameId) => {
     if (currentGames[gameId].players.length === 0) {
         delete currentGames[gameId];
-    }
+    };
+};
+
+const fixPlayerPositions = (gameId) => {
+    const players = currentGames[gameId].players;
+    for (let i = 0; i < players.length; i++) {
+        players[i].position = i;
+        fixPlayerName(players[i], i);
+        
+    };
+};
+
+const fixPlayerName = (player, index) => {
+    for (let i = 0; i < defaultNames.length; i++) {
+        if (defaultNames[i] === player.name) {
+            player.name = defaultNames[index];
+        };
+    };
 };
 
 const app = express();
@@ -64,7 +89,7 @@ io.on("connection", (socket) => {
         
         socket.join(game.id);
         io.to(player.id).emit("game-started", game, player);
-        console.log(currentGames);
+        console.log(currentGames[game.id].players);
     });
     
     socket.on("join-request", (proposedId) => {
@@ -78,8 +103,9 @@ io.on("connection", (socket) => {
                         foundMatch = true;
                         socket.join(gameIdKey);
                         const player = createPlayer(currentGames[gameIdKey], socket.id, false);
+                        console.log(`NEW PLAYER ACCEPTED. PLAYER ID: ${player.id}`);
+                        console.log(currentGames[gameIdKey].players);
                         
-                        console.log("FINDING 2 MATCHES?");
                         io.to(player.id).emit("join-accepted", currentGames[gameIdKey], player)
                         socket.to(gameIdKey).emit("new-player", player);
                     };
@@ -92,16 +118,44 @@ io.on("connection", (socket) => {
             };
     });
 
-    socket.on("leave-game", (gameId, player) => {
+    socket.on("leave-game", (gameId, leavingPlayer) => {
         socket.leave(gameId);
         socket.disconnect();
-        removePlayer(player.id, gameId);
+
+        removePlayer(leavingPlayer.id, gameId);
         removeGameIfEmpty(gameId);
+
         if (currentGames[gameId]) {
-            // choose new host
-            io.to(gameId).emit("player-left", player.id);
+            const newHost = currentGames[gameId].players[0];
+            newHost.isHost = true;
+            
+            fixPlayerPositions(gameId);
+            io.to(gameId).emit("player-left", currentGames[gameId].players, newHost, ); /////////////////////////////////
         };
-        
+    });
+
+    socket.on("name-change-submit", (newName, playerId, gameId) => {
+        console.log(currentGames[gameId].players);
+        const players = currentGames[gameId].players;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].id === playerId) {
+                console.log(`1. PLAYER ID IS ${playerId} AND THEIR NAME IS ${players[i].name}`);
+                players[i].name = newName;
+                console.log(`2. PLAYER ID IS ${playerId} AND THEIR NAME IS ${players[i].name}`);
+                break;
+            };
+        };
+        console.log(currentGames[gameId].players);
+        // console.log(playerId);
+        io.to(gameId).emit("name-change-incoming", newName, playerId);
+    });
+
+    socket.on("keydownTrue", (key) => {
+        for (let i = 0; i < keyVerb.length; i++) {
+            if (key === keyVerb[i].button) {
+                keyVerb[i].bool = true;
+            };
+        };
     });
 });
 
