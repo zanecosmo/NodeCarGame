@@ -19,7 +19,7 @@ module.exports = {
     },
     
     createPlayer: function(game, socketId, hostStatus) {
-        console.log(currentGames[game.id].players.length);
+        // console.log(currentGames[game.id].players.length);
         const position = currentGames[game.id].players.length;
         const player = {
             id: socketId,
@@ -28,13 +28,12 @@ module.exports = {
             name: defaultNames[position],
             html: ""
         };
-        console.log(currentGames[game.id].players);
+        // console.log(currentGames[game.id].players);
         currentGames[game.id].players.push(player);
         return player;
     },
     
     removePlayer: function(playerId, gameId) {
-        console.log(gameId);
         const players = currentGames[gameId].players;
         for (let i = 0; i < players.length; i++) {
             if (players[i].id === playerId) {
@@ -66,7 +65,7 @@ module.exports = {
         };
     },
     
-    removeSocket: function(socketId) {
+    removeSocket: function(socketId) { /////////////////////////////////////////////////////////
         for (let i = 0; i < socketConnections.length; i++) {
             if (socketId === socketConnections[i]) {
                 socketConnections.splice(i, 1);
