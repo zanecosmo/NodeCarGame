@@ -41,6 +41,7 @@ const createPlayer = (game, socketId, hostStatus) => {
 };
 
 const removePlayer = (playerId, gameId) => {
+    console.log(gameId);
     const players = currentGames[gameId].players;
     for (let i = 0; i < players.length; i++) {
         if (players[i].id === playerId) {
@@ -80,8 +81,20 @@ app.use("/", express.static(`${__dirname}/public`));
 const server = http.createServer(app);
 const io = socketIO(server);
 
+let socketConnections = [];
+
+const removeSocket = (socketId) => {
+    for (let i = 0; i < socketConnections.length; i++) {
+        if (socketId === socketConnections[i]) {
+            socketConnections.splice(i, 1);
+        };
+    };
+};
+
 io.on("connection", (socket) => {
     console.log(`PLAYER HAS JOINED. PLAYER ID: ${socket.id}`);
+    socketConnections.push(socket.id);
+    console.log(socketConnections);
 
     socket.on("start-game", () => {
         const game = createGame();
@@ -89,39 +102,48 @@ io.on("connection", (socket) => {
         
         socket.join(game.id);
         io.to(player.id).emit("game-started", game, player);
-        console.log(currentGames[game.id].players);
     });
     
     socket.on("join-request", (proposedId) => {
             console.log(`PROPOSED ID: ${proposedId}`);
+            console.log(socketConnections);
+
             let foundMatch = false;
-            for (const gameIdKey in currentGames) { // fix this up XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-                
-                if (foundMatch === false) {
-                    
-                    if (gameIdKey === proposedId) {
-                        foundMatch = true;
+            for (const gameIdKey in currentGames) {
+                if (gameIdKey === proposedId) {
+                    foundMatch = true;
+                    if (currentGames[gameIdKey].players.length === 4) {
+                        console.log("PLAYER TRIED TO JOIN BUT LOBBY WAS FULL")
+                        io.to(socket.id).emit("lobby-full");
+                        socket.disconnect();
+                        removeSocket(socket.id);
+                    } else {
                         socket.join(gameIdKey);
+
                         const player = createPlayer(currentGames[gameIdKey], socket.id, false);
                         console.log(`NEW PLAYER ACCEPTED. PLAYER ID: ${player.id}`);
-                        console.log(currentGames[gameIdKey].players);
-                        
+                    
                         io.to(player.id).emit("join-accepted", currentGames[gameIdKey], player)
                         socket.to(gameIdKey).emit("new-player", player);
+                        break;
                     };
-                } else {
-                    io.to(socket.id).emit("invalid-code");
-                    socket.disconnect();
-                    break;
                 };
-                
             };
+                
+            if (foundMatch === false) {
+                io.to(socket.id).emit("invalid-code");
+                socket.disconnect();
+                removeSocket(socket.id);
+            };
+                
     });
 
     socket.on("leave-game", (gameId, leavingPlayer) => {
         socket.leave(gameId);
         socket.disconnect();
-
+        
+        console.log(`PLAYER HAS LEFT. PLAYER ID: ${leavingPlayer.id}`)
+        removeSocket(socket.id);
         removePlayer(leavingPlayer.id, gameId);
         removeGameIfEmpty(gameId);
 
@@ -130,12 +152,11 @@ io.on("connection", (socket) => {
             newHost.isHost = true;
             
             fixPlayerPositions(gameId);
-            io.to(gameId).emit("player-left", currentGames[gameId].players, newHost, ); /////////////////////////////////
+            io.to(gameId).emit("player-left", currentGames[gameId].players, newHost);
         };
     });
 
     socket.on("name-change-submit", (newName, playerId, gameId) => {
-        console.log(currentGames[gameId].players);
         const players = currentGames[gameId].players;
         for (let i = 0; i < players.length; i++) {
             if (players[i].id === playerId) {
@@ -145,8 +166,6 @@ io.on("connection", (socket) => {
                 break;
             };
         };
-        console.log(currentGames[gameId].players);
-        // console.log(playerId);
         io.to(gameId).emit("name-change-incoming", newName, playerId);
     });
 

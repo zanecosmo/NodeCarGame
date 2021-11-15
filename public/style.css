@@ -69,10 +69,10 @@
   }
   
   .redLetter {
-  position: absolute;
+  /* position: absolute; */
   color: rgb(220, 0, 0);
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   font-style: oblique;
   font-weight: bold;
   left: 2%;
@@ -170,7 +170,15 @@
   }
   
   #invalidCode {
-    display:none;
-    top: 187px;
+    position: absolute;
+    display: none;
+    top: 293px;
+    left: 3%;
+  }
+
+  #lobbyFull {
+    position: absolute;
+    display: none;
+    top: 308px;
     left: 3%;
   }

@@ -15,9 +15,7 @@ const start = () => {
         const socketListeners = {
             newPlayer: (socket) => {
                 socket.on("new-player", (playerObject) => {
-                    console.log(joinedGame.players);
                     joinedGame.players.push(playerObject);
-                    console.log(joinedGame.players);
                     updatePlayerHTML();
                     loadLobby(socket);
                 });
@@ -28,8 +26,6 @@ const start = () => {
                     joinedGame = game;
                     updatePlayerHTML();
                     loadLobby(socket);
-                    console.log("MADE IT THIS FAR");
-                    console.log(joinedGame.players);
                 });
             },
             playerLeft: (socket) => {
@@ -54,8 +50,15 @@ const start = () => {
                 });
             },
             invalidCode : (socket) => {
+                console.log(tries);
                 socket.on("invalid-code", () => {
                     tries++;
+                    loadJoinPage();
+                });
+            },
+            lobbyFull: (socket) => {
+                socket.on("lobby-full", () => {
+                    triedButFull++;
                     loadJoinPage();
                 });
             },
@@ -63,25 +66,17 @@ const start = () => {
                 socket.on("name-change-incoming", (newName, playerId) => {
                     for (let i = 0; i < joinedGame.players.length; i++) {
                         if (joinedGame.players[i].id === playerId) {
-                            console.log(joinedGame.players);
-                            console.log(`MY ID IS ${self.id}`);
-                            // console.log(`INCOMING ID: ${playerId} player[i].id: ${joinedGame.players[i].id}`);
                             joinedGame.players[i].name = newName;
-                            // console.log(`NEW NAME: ${joinedGame.players[i].name}`);
                             break;
                         };
                     };
 
                     if (self.id === playerId) {self.name = newName};
 
-                    console.log(joinedGame.players);
-
                     updatePlayerHTML();
                     loadLobby(socket);
-                    console.log(joinedGame.players);
                 });
             },
-
         };
 
         renderPartial(
@@ -199,7 +194,8 @@ const start = () => {
         });
 
         // JOIN ATTEMPT + INVALID LOOP
-        let tries = 0;        
+        let tries = 0;
+        let triedButFull = 0;
 
         const loadJoinPage = () => {                      
             renderPartial(
@@ -208,10 +204,15 @@ const start = () => {
                 
                 <input id="codeBox" type="text" class="input" placeholder="ENTER CODE HERE"/>
                 <div id="invalidCode" class="redLetter">--invalid game-code, please try again${
-                    tries === 1
+                    tries < 2
                         ? ''
                         : ` (${tries.toString()})`
-                }--</div>                
+                }--</div>
+                <div id="lobbyFull" class="redLetter">--cannot join, lobby is full${
+                    triedButFull < 2
+                    ? ''
+                    : ` (${triedButFull.toString()})`
+                }--</div>
                 
                 <div id="joinLobbyButton" class="menuButton">Join</div>                
                 <div id="backButton" class="menuButton">Back</div>
@@ -219,8 +220,10 @@ const start = () => {
             );
             
             if (tries > 0) show(id('invalidCode'));
+            if (triedButFull > 0) show(id('lobbyFull'));
             
             click(id('joinLobbyButton'), () => {
+                console.log("JOIN LOBBY PRESSED");
                 if (id('codeBox').value === '') {
                     tries++;
                     loadJoinPage();                                    
@@ -230,15 +233,13 @@ const start = () => {
                     socketListeners.joinAccepted(socket);
                     socketListeners.invalidCode(socket);
                     socketListeners.nameChangeIncoming(socket);
+                    socketListeners.lobbyFull(socket);
 
                     socket.emit("join-request", id("codeBox").value);
                 };
-
-
             });
             
             click(id('backButton'), () => {
-                socket.disconnect(); /////////////////////////////////////////////
                 renderDefaultPartial();
             });
         };
