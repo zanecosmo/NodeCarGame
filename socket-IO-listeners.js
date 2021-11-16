@@ -6,8 +6,9 @@ module.exports = (io) => {
     return {
         disconnect: function(socket) {
             socket.on("disconnect", (reason) => {
-                console.log(`PLAYER ${socket.id} IS TRYING TO DISCONNECT`);
-                if (reason = "transport close") {
+                // console.log(reason);
+                if (reason === "transport close") {
+                    // console.log(`PLAYER ACCIDENTALLY LEAVING`);
                     
                     for (const gameKeyId in currentGames) {
                         for (let i = 0; i < currentGames[gameKeyId].players.length; i++) {
@@ -89,7 +90,7 @@ module.exports = (io) => {
         leaveGame: (socket) => {
             socket.on("leave-game", (gameId, leavingPlayer) => {
                 socket.leave(gameId);
-                // console.log("PLAYER DISCONNECTED");
+                console.log("PLAYER ATTEMPTING TO LEAVE");
                 socket.disconnect(true);
                 
                 // console.log(`PLAYER HAS LEFT. PLAYER ID: ${leavingPlayer.id}`)

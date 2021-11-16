@@ -50,7 +50,7 @@ const start = () => {
                 });
             },
             invalidCode : (socket) => {
-                console.log(tries);
+                // console.log(tries);
                 socket.on("invalid-code", () => {
                     tries++;
                     loadJoinPage();
@@ -223,7 +223,7 @@ const start = () => {
             if (triedButFull > 0) show(id('lobbyFull'));
             
             click(id('joinLobbyButton'), () => {
-                console.log("JOIN LOBBY PRESSED");
+                // console.log("JOIN LOBBY PRESSED");
                 if (id('codeBox').value === '') {
                     tries++;
                     loadJoinPage();                                    
