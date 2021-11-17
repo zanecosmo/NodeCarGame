@@ -68,8 +68,8 @@ module.exports = (io, gameId) => {
         findCoordinates(playerRotation);
 
         for (let i = 0; i < game.input.length; i++) {
-            if (game.input[i].bool === true) {                        
-                game.input[i].action(game.input[i].modifier)                                                                               
+            if (game.input[i].bool === true) {
+                game.input[i].action(game.input[i].modifier)
             } else if (game.input[i].tween === true) {
                 game.input[i].otherAction(game.input[i].modifier)
             };

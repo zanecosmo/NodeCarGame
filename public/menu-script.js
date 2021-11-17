@@ -8,6 +8,7 @@ const renderPartial = (page) => id('partial').innerHTML = page;
 let self = null;
 let joinedGame = null;
 let controlKeys = ["w", "s", "a", "d"];
+let inGame = false;
 const socket = io();
 
 const socketListeners = {
@@ -35,6 +36,11 @@ const socketListeners = {
             if (newHost.id === self.id) {self.isHost = true};
 
             updatePlayerHTML();
+
+            if (inGame) {
+                renderShell(`<div class="title">MULTI-CAR</div>`);
+                inGame = !inGame;
+            };
             loadLobby();
         });
     },
@@ -76,6 +82,7 @@ const socketListeners = {
     },
     gameStarting: () => {
         socket.on("game-starting", () => {
+            inGame = true;
             startGameInstance();
         });
     },
@@ -107,7 +114,7 @@ const renderDefaultPartial = () => {
         `
     );
 
-    click(id('startGameButton'), () => { //////////////////////////////////////
+    click(id('startGameButton'), () => {
         console.log("START GAME PRESSED");
         socketListeners.lobbyOpened();
         socket.emit("open-lobby");
