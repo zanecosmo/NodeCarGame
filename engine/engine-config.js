@@ -1,4 +1,4 @@
 module.exports = {
     topSpeed: 10,
-    turnRadius: 5 
+    turnRadius: 5
 };

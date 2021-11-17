@@ -17,14 +17,13 @@ const socketIOListeners = SIOL(io);
 io.on("connection", (socket) => {
     console.log(`PLAYER HAS JOINED. PLAYER ID: ${socket.id}`);
     socketConnections.push(socket.id);
-    // console.log(socketConnections);
 
     for (const listener in socketIOListeners) {
         socketIOListeners[listener](socket);
     };
 });
 
-server.listen(4000, () => {
-    console.log("LISTENING on PORT 4000");
+const port = 4000
+server.listen(port, () => {
+    console.log(`LISTENING on PORT ${port}`);
 });
-
