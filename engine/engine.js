@@ -57,18 +57,12 @@ module.exports = (io, gameId) => {
 
     const steerEnd = (mod) => game.input[mod].tween = false;
 
-    console.log("-----");
-    console.log(currentGames[gameId].input);
-    console.log(game);
     game.input = [
         {button: "w", tween: false, bool: false, otherAction: deccelerate, action: accelerate, modifier: -1},
         {button: "s", tween: false, bool: false, otherAction: deccelerate, action: accelerate, modifier: 1},
         {button: "a", tween: false, bool: false, otherAction: steerEnd, action: steerLeft, modifier: 2},      
         {button: "d", tween: false, bool: false, otherAction: steerEnd, action: steerRight, modifier: 3}
     ];
-    console.log("-----");
-    console.log(currentGames[gameId].input);
-    console.log(game);
 
     const updateCar = () => {
         findCoordinates(playerRotation);
@@ -86,9 +80,11 @@ module.exports = (io, gameId) => {
         playerPosition[1],
         playerRotation
         ];
-        // console.log(positionPacket);
+        console.log(positionPacket);
         io.to(gameId).emit("position-update", positionPacket);
     };
 
-    setInterval(updateCar, 20);
+    offKey = setInterval(updateCar, 20);
+
+    game.offKey = offKey;
 };

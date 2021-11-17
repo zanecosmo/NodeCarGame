@@ -7,11 +7,12 @@ module.exports = (io) => {
     return {
         disconnect: function(socket) {
             socket.on("disconnect", (reason) => {
-                // console.log(reason);
+                console.log(reason);
                 if (reason === "transport close") {
                     for (const gameKeyId in currentGames) {
                         for (let i = 0; i < currentGames[gameKeyId].players.length; i++) {
                             if (currentGames[gameKeyId].players[i].id === socket.id) {
+                                clearInterval(currentGames[gameKeyId].offKey);
                                 util.removePlayer(socket.id, gameKeyId);
                                 util.removeGameIfEmpty(gameKeyId);
 
@@ -37,12 +38,13 @@ module.exports = (io) => {
             });
         },
         startGame: (socket) => {
-            socket.on("start-game", () => {
+            socket.on("open-lobby", () => {
                 const game = util.createGame();
                 const player = util.createPlayer(game, socket.id, true);
                 
                 socket.join(game.id);
-                io.to(player.id).emit("game-started", game, player);
+                console.log("START GAME SUBMIT RECEIVED");
+                io.to(player.id).emit("lobby-opened", game, player);
             });
         },
         joinRequest: (socket) => {
@@ -53,8 +55,8 @@ module.exports = (io) => {
                         foundMatch = true;
                         if (currentGames[gameIdKey].players.length === 4) {
                             io.to(socket.id).emit("lobby-full");
-                            socket.disconnect(true);
-                            util.removeSocket(socket.id);
+                            // socket.disconnect(true);
+                            // util.removeSocket(socket.id);
                         } else {
                             socket.join(gameIdKey);
     
@@ -70,18 +72,17 @@ module.exports = (io) => {
                 if (foundMatch === false) {
                     io.to(socket.id).emit("invalid-code");
 
-                    socket.disconnect(true);
-                    util.removeSocket(socket.id);
+                    // socket.disconnect(true);
+                    // util.removeSocket(socket.id);
                 };         
             });
         },
         leaveGame: (socket) => {
             socket.on("leave-game", (gameId, leavingPlayer) => {
                 socket.leave(gameId);
-                console.log("PLAYER ATTEMPTING TO LEAVE");
-                socket.disconnect(true);
+                // socket.disconnect(true);
                 
-                util.removeSocket(socket.id);
+                // util.removeSocket(socket.id);
                 util.removePlayer(leavingPlayer.id, gameId);
                 util.removeGameIfEmpty(gameId);
         

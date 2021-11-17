@@ -5,64 +5,61 @@ const click = (element, callback) => element.addEventListener('click', () => cal
 const renderShell = (shell) => id('shell').innerHTML = shell;    
 const renderPartial = (page) => id('partial').innerHTML = page;
 
-
 let self = null;
 let joinedGame = null;
 let controlKeys = ["w", "s", "a", "d"];
+const socket = io();
 
 const socketListeners = {
-    newPlayer: (socket) => {
+    newPlayer: () => {
         socket.on("new-player", (playerObject) => {
             joinedGame.players.push(playerObject);
             updatePlayerHTML();
-            loadLobby(socket);
+            loadLobby();
         });
     },
-    gameStarted: (socket) => {
-        socket.on("game-started", (game, player) => {
+    lobbyOpened: () => {
+        socket.on("lobby-opened", (game, player) => {
+            console.log("LOBBY OPENED");
             self = player;
             joinedGame = game;
             updatePlayerHTML();
-            loadLobby(socket);
+            loadLobby();
         });
     },
-    playerLeft: (socket) => {
+    playerLeft: () => {
         socket.on("player-left", (playerArray, newHost) => {
+            console.log("PLAYER LEFT");
             joinedGame.players = playerArray;
             
             if (newHost.id === self.id) {self.isHost = true};
-            
+
             updatePlayerHTML();
-            loadLobby(socket);
+            loadLobby();
         });
     },
-    joinAccepted: function(socket) {
+    joinAccepted: () => {
         socket.on("join-accepted", (game, player) => {
             joinedGame = game;
             self = player;
             updatePlayerHTML();
-            loadLobby(socket);
-            
-            this.newPlayer(socket);
-            this.playerLeft(socket);
-            this.nameChangeIncoming(socket);
-            this.gameStarting(socket);
+            loadLobby();
         });
     },
-    invalidCode : (socket) => {
-        // console.log(tries);
+    invalidCode : () => {
         socket.on("invalid-code", () => {
             tries++;
             loadJoinPage();
         });
     },
-    lobbyFull: (socket) => {
+    lobbyFull: () => {
         socket.on("lobby-full", () => {
+            console.log
             triedButFull++;
             loadJoinPage();
         });
     },
-    nameChangeIncoming: (socket) => {
+    nameChangeIncoming: () => {
         socket.on("name-change-incoming", (newName, playerId) => {
             for (let i = 0; i < joinedGame.players.length; i++) {
                 if (joinedGame.players[i].id === playerId) {
@@ -72,17 +69,34 @@ const socketListeners = {
             };
 
             if (self.id === playerId) {self.name = newName};
-
+            
             updatePlayerHTML();
-            loadLobby(socket);
+            loadLobby();
         });
     },
-    gameStarting: (socket) => {
+    gameStarting: () => {
         socket.on("game-starting", () => {
-            console.log("GAME STARTING");
-            startGameInstance(socket);
+            startGameInstance();
         });
     },
+};
+
+const keyDown = (e) => {
+    console.log(e.key);
+    for (let i = 0; i < controlKeys.length; i++) {
+        if (e.key === controlKeys[i]) {
+            socket.emit("key-down", controlKeys[i], joinedGame.id);
+        };
+    };
+};
+
+const keyUp = (e) => {
+    console.log(e.key);
+    for (let i = 0; i < controlKeys.length; i++) {
+        if (e.key === controlKeys[i]) {
+            socket.emit("key-up", controlKeys[i], joinedGame.id);
+        };
+    };
 };
 
 const renderDefaultPartial = () => {
@@ -93,16 +107,10 @@ const renderDefaultPartial = () => {
         `
     );
 
-    click(id('startGameButton'), () => {
-        const socket = io();
-        
-        socketListeners.newPlayer(socket);
-        socketListeners.gameStarted(socket);
-        socketListeners.playerLeft(socket);
-        socketListeners.nameChangeIncoming(socket);
-        socketListeners.gameStarting(socket);
-        
-        socket.emit("start-game"); 
+    click(id('startGameButton'), () => { //////////////////////////////////////
+        console.log("START GAME PRESSED");
+        socketListeners.lobbyOpened();
+        socket.emit("open-lobby");
     });
 
     click(id('joinGameButton'), () => {
@@ -110,7 +118,7 @@ const renderDefaultPartial = () => {
     });
 };
 
-const startGameInstance = (socket) => {
+const startGameInstance = () => {
     renderShell(
         `
         <div></div>
@@ -123,25 +131,12 @@ const startGameInstance = (socket) => {
         `
     );
 
-    document.addEventListener("keydown", (e) => {
-        for (let i = 0; i < controlKeys.length; i++) {
-            if (e.key === controlKeys[i]) {
-                socket.emit("key-down", controlKeys[i], joinedGame.id);
-            };
-        };
-    });
-
-    document.addEventListener("keyup", (e) => {
-        for (let i = 0; i < controlKeys.length; i++) {
-            if (e.key === controlKeys[i]) {
-                socket.emit("key-up", controlKeys[i], joinedGame.id);
-            };
-        };
-    });
+    document.addEventListener("keydown", keyDown);
+    document.addEventListener("keyup", keyUp);
 
     const playerObject = id("square");
 
-    socket.on("position-update", (updatePacket) => {
+    socket.on("position-update", (updatePacket) => { // turn off this listener when someone leaves the game and lobby is realoaded
         playerObject.style.transform = `rotateZ(${updatePacket[2]*(-1)}deg)`;
         playerObject.style.left = `${updatePacket[1]}px`;
         playerObject.style.top = `${updatePacket[0]}px`;
@@ -172,7 +167,12 @@ const updatePlayerHTML = () => {
     };
 };
 
-const loadLobby = (socket) => {
+const loadLobby = () => {
+    console.log("LOBBY LOADED");
+    socket.removeAllListeners();
+    document.removeEventListener("keydown", keyDown);
+    document.removeEventListener("keyup", keyUp);
+
     const loadPlayerHTML = () => {
         let playerHTML = "";
         for (let i = 0; i < joinedGame.players.length; i++) {
@@ -229,12 +229,17 @@ const loadLobby = (socket) => {
         renderDefaultPartial();
     });
 
+    socketListeners.nameChangeIncoming();
+    socketListeners.newPlayer();
+    socketListeners.playerLeft();
+    socketListeners.gameStarting();
 };
 
 let tries = 0;
 let triedButFull = 0;
 
-const loadJoinPage = () => {                      
+const loadJoinPage = () => {
+    socket.removeAllListeners();
     renderPartial(
         `
         <div class="text">ENTER GAME CODE:</div>
@@ -265,17 +270,17 @@ const loadJoinPage = () => {
             tries++;
             loadJoinPage();                                    
         } else {
-            const socket = io();
-
-            socketListeners.joinAccepted(socket);
-            socketListeners.invalidCode(socket);
-            socketListeners.lobbyFull(socket);
+            socketListeners.joinAccepted();
+            socketListeners.invalidCode();
+            socketListeners.lobbyFull();
 
             socket.emit("join-request", id("codeBox").value);
         };
     });
     
     click(id('backButton'), () => {
+        tries = 0;
+        triedButFull = 0;
         renderDefaultPartial();
     });
 };

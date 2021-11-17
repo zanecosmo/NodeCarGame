@@ -15,7 +15,7 @@ module.exports = {
             id: gameId,
             players: [],
             input: [],
-            engine: null
+            offKey: null
         };
         return currentGames[gameId];
     },
@@ -67,7 +67,7 @@ module.exports = {
         };
     },
     
-    removeSocket: function(socketId) { /////////////////////////////////////////////////////////
+    removeSocket: function(socketId) {
         for (let i = 0; i < socketConnections.length; i++) {
             if (socketId === socketConnections[i]) {
                 socketConnections.splice(i, 1);
