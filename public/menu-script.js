@@ -9,6 +9,47 @@ const start = () => {
     
     let self = null;
     let joinedGame = null;
+    let controlKeys = ["w", "s", "a", "d"];
+
+    const startGameInstance = (socket) => {
+        renderShell(
+            `
+            <div></div>
+            `
+        );
+        
+        renderPartial(
+            `
+            <img id="square" src="white-car.jpg" />
+            `
+        );
+
+        document.addEventListener("keydown", (e) => {
+            for (let i = 0; i < controlKeys.length; i++) {
+                if (e.key === controlKeys[i]) {
+                    socket.emit("key-down", controlKeys[i], joinedGame.id);
+                };
+            };
+        });
+
+        document.addEventListener("keyup", (e) => {
+            for (let i = 0; i < controlKeys.length; i++) {
+                if (e.key === controlKeys[i]) {
+                    socket.emit("key-up", controlKeys[i], joinedGame.id);
+                };
+            };
+        });
+    
+        const playerObject = id("square");
+
+        socket.on("position-update", (updatePacket) => {
+            console.log(playerObject);
+            console.log(updatePacket);
+            playerObject.style.transform = `rotateZ(${updatePacket[2]*(-1)}deg)`;
+            playerObject.style.left = `${updatePacket[1]}px`;
+            playerObject.style.top = `${updatePacket[0]}px`;
+        });
+    };
 
     const renderDefaultPartial = () => { 
         
@@ -47,6 +88,8 @@ const start = () => {
                     
                     socketListeners.newPlayer(socket);
                     socketListeners.playerLeft(socket);
+                    socketListeners.nameChangeIncoming(socket);
+                    socketListeners.gameStarting(socket);
                 });
             },
             invalidCode : (socket) => {
@@ -75,6 +118,12 @@ const start = () => {
 
                     updatePlayerHTML();
                     loadLobby(socket);
+                });
+            },
+            gameStarting: (socket) => {
+                socket.on("game-starting", () => {
+                    console.log("GAME STARTING");
+                    startGameInstance(socket);
                 });
             },
         };
@@ -159,19 +208,9 @@ const start = () => {
 
             if (id("playGameButton")) {
                 click(id('playGameButton'), () => {
-                renderShell(
-                    `
-                    <div></div>
-                    `
-                );
-                
-                renderPartial(
-                    `
-                    <div id="square"><img id="car" src="blackCar.jpg"></div>
-                    `
-                );
-                startRender();
-            })};
+                    socket.emit("game-start-submit", joinedGame.id);
+                }
+            )};
 
             click(id('leaveGameButton'), () => {
                 socket.emit("leave-game", joinedGame.id, self);
@@ -189,6 +228,7 @@ const start = () => {
             socketListeners.gameStarted(socket);
             socketListeners.playerLeft(socket);
             socketListeners.nameChangeIncoming(socket);
+            socketListeners.gameStarting(socket);
             
             socket.emit("start-game"); 
         });
@@ -232,7 +272,6 @@ const start = () => {
 
                     socketListeners.joinAccepted(socket);
                     socketListeners.invalidCode(socket);
-                    socketListeners.nameChangeIncoming(socket);
                     socketListeners.lobbyFull(socket);
 
                     socket.emit("join-request", id("codeBox").value);

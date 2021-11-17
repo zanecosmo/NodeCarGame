@@ -13,7 +13,9 @@ module.exports = {
         const gameId = this.randomId();
         currentGames[gameId] = {
             id: gameId,
-            players: []
+            players: [],
+            input: [],
+            engine: null
         };
         return currentGames[gameId];
     },

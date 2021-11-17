@@ -1,5 +1,6 @@
 const socketConnections = require("./storage/socket-connections.js");
 const currentGames = require("./storage/current-games.js");
+const startEngine = require("./engine/engine.js");
 const util = require("./util.js");
 
 module.exports = (io) => {
@@ -120,6 +121,34 @@ module.exports = (io) => {
                     };
                 };
                 io.to(gameId).emit("name-change-incoming", newName, playerId);
+            });
+        },
+        gameStartSubmit: (socket) => {
+            socket.on("game-start-submit", (gameId) => {
+                console.log("GAME START SUBMIT RECEIVED");
+                io.to(gameId).emit("game-starting");
+                startEngine(io, gameId);
+            });
+        },
+        keyDown: (socket) => {
+            socket.on("key-down", (key, gameId) => {
+                console.log(key);
+                const input = currentGames[gameId].input;
+                for (let i = 0; i < input.length; i++) {
+                    if (input[i].button === key) {
+                        input[i].bool = true;
+                    };
+                };
+            });
+        },
+        keyUp: (socket) => {
+            socket.on("key-up", (key, gameId) => {
+                const input = currentGames[gameId].input;
+                for (let i = 0; i < input.length; i++) {
+                    if (input[i].button === key) {
+                        input[i].bool = false;
+                    };
+                };
             });
         }
     };
