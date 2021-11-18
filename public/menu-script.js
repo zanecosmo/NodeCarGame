@@ -7,7 +7,7 @@ const renderPartial = (page) => id('partial').innerHTML = page;
 
 let self = null;
 let joinedGame = null;
-let controlKeys = ["w", "s", "a", "d"];
+let controlKeys = null;
 let inGame = false;
 const socket = io();
 
@@ -24,6 +24,7 @@ const socketListeners = {
             console.log("LOBBY OPENED");
             self = player;
             joinedGame = game;
+            controlKeys = ["w", "a"];
             updatePlayerHTML();
             loadLobby();
         });
@@ -48,6 +49,7 @@ const socketListeners = {
         socket.on("join-accepted", (game, player) => {
             joinedGame = game;
             self = player;
+            controlKeys = ["s", "d"];
             updatePlayerHTML();
             loadLobby();
         });
