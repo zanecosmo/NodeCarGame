@@ -110,13 +110,15 @@ module.exports = (io) => {
         gameStartSubmit: (socket) => {
             socket.on("game-start-submit", (gameId) => {
                 console.log("GAME START SUBMIT RECEIVED");
+                // random controls logic
+                
                 io.to(gameId).emit("game-starting");
                 startEngine(io, gameId);
             });
         },
         keyDown: (socket) => {
             socket.on("key-down", (key, gameId) => {
-                console.log(key);
+                // console.log(key);
                 const input = currentGames[gameId].input;
                 for (let i = 0; i < input.length; i++) {
                     if (input[i].button === key) {
@@ -131,6 +133,7 @@ module.exports = (io) => {
                 for (let i = 0; i < input.length; i++) {
                     if (input[i].button === key) {
                         input[i].bool = false;
+                        input[i].tween = true;
                     };
                 };
             });

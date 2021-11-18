@@ -8,6 +8,9 @@ const SIOL = require("./socket-IO-listeners.js");
 const app = express();
 
 app.use(morgan("dev"));
+app.get("/status", (req, res) => {
+    res.send(socketConnections);
+})
 app.use("/", express.static(`${__dirname}/public`));
 
 const server = http.createServer(app);
@@ -23,7 +26,7 @@ io.on("connection", (socket) => {
     };
 });
 
-const port = 4000
+const port = process.env.PORT || 4000
 server.listen(port, () => {
     console.log(`LISTENING on PORT ${port}`);
 });

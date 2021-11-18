@@ -80,7 +80,7 @@ module.exports = (io, gameId) => {
         playerPosition[1],
         playerRotation
         ];
-        console.log(positionPacket);
+        // console.log(positionPacket);
         io.to(gameId).emit("position-update", positionPacket);
     };
 

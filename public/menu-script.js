@@ -89,7 +89,7 @@ const socketListeners = {
 };
 
 const keyDown = (e) => {
-    console.log(e.key);
+    // console.log(e.key);
     for (let i = 0; i < controlKeys.length; i++) {
         if (e.key === controlKeys[i]) {
             socket.emit("key-down", controlKeys[i], joinedGame.id);
@@ -98,7 +98,7 @@ const keyDown = (e) => {
 };
 
 const keyUp = (e) => {
-    console.log(e.key);
+    // console.log(e.key);
     for (let i = 0; i < controlKeys.length; i++) {
         if (e.key === controlKeys[i]) {
             socket.emit("key-up", controlKeys[i], joinedGame.id);
