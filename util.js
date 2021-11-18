@@ -28,7 +28,8 @@ module.exports = {
             position: position,
             isHost: hostStatus,
             name: defaultNames[position],
-            html: ""
+            html: "",
+            controlKeys: []
         };
         // console.log(currentGames[game.id].players);
         currentGames[game.id].players.push(player);
@@ -75,7 +76,27 @@ module.exports = {
         };
     },
 
-//     divideControls: () => {
-
-//     };
-}
+    divideControls: (gameId) => {
+        let keys = ["w", "a", "s", "d"];
+        const players = currentGames[gameId].players;
+        while (keys.length > 1) {
+            for (let i = 0; i < players.length; i++) {
+                console.log(players);
+                const num = Math.floor(Math.random()*keys.length);
+                const key = keys.splice(num, 1);
+                console.log(key);
+                players[i].controlKeys.push(key[0]);
+                console.log(players[i]);
+            };
+        };
+        if (players.length % 2 !== 0) {
+            const index = Math.floor(Math.random()*players.length);
+            players[index].controlKeys.push(keys[0]);
+        };
+    },
+    resetControls: (gameId) => {
+        for (let i = 0; i < currentGames[gameId].players.length; i++) {
+            currentGames[gameId].players[i].controlKeys = [];
+        };
+    }
+};

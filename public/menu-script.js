@@ -7,7 +7,6 @@ const renderPartial = (page) => id('partial').innerHTML = page;
 
 let self = null;
 let joinedGame = null;
-let controlKeys = null;
 let inGame = false;
 const socket = io();
 
@@ -24,7 +23,6 @@ const socketListeners = {
             console.log("LOBBY OPENED");
             self = player;
             joinedGame = game;
-            controlKeys = ["w", "a"];
             updatePlayerHTML();
             loadLobby();
         });
@@ -35,6 +33,7 @@ const socketListeners = {
             joinedGame.players = playerArray;
             
             if (newHost.id === self.id) {self.isHost = true};
+            self.controlKeys = [];
 
             updatePlayerHTML();
 
@@ -49,7 +48,6 @@ const socketListeners = {
         socket.on("join-accepted", (game, player) => {
             joinedGame = game;
             self = player;
-            controlKeys = ["s", "d"];
             updatePlayerHTML();
             loadLobby();
         });
@@ -83,8 +81,15 @@ const socketListeners = {
         });
     },
     gameStarting: () => {
-        socket.on("game-starting", () => {
+        socket.on("game-starting", (playerArray) => {
             inGame = true;
+            for (let i = 0; i < playerArray.length; i++) {
+                if (playerArray[i].id === self.id) {
+                    self.controlKeys = playerArray[i].controlKeys;
+                    console.log(self.controlKeys);
+                    break;
+                };
+            };
             startGameInstance();
         });
     },
@@ -92,18 +97,18 @@ const socketListeners = {
 
 const keyDown = (e) => {
     // console.log(e.key);
-    for (let i = 0; i < controlKeys.length; i++) {
-        if (e.key === controlKeys[i]) {
-            socket.emit("key-down", controlKeys[i], joinedGame.id);
+    for (let i = 0; i < self.controlKeys.length; i++) {
+        if (e.key === self.controlKeys[i]) {
+            socket.emit("key-down", self.controlKeys[i], joinedGame.id);
         };
     };
 };
 
 const keyUp = (e) => {
     // console.log(e.key);
-    for (let i = 0; i < controlKeys.length; i++) {
-        if (e.key === controlKeys[i]) {
-            socket.emit("key-up", controlKeys[i], joinedGame.id);
+    for (let i = 0; i < self.controlKeys.length; i++) {
+        if (e.key === self.controlKeys[i]) {
+            socket.emit("key-up", self.controlKeys[i], joinedGame.id);
         };
     };
 };
