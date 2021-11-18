@@ -55,8 +55,6 @@ module.exports = (io) => {
                         foundMatch = true;
                         if (currentGames[gameIdKey].players.length === 4) {
                             io.to(socket.id).emit("lobby-full");
-                            // socket.disconnect(true);
-                            // util.removeSocket(socket.id);
                         } else {
                             socket.join(gameIdKey);
     
@@ -71,18 +69,12 @@ module.exports = (io) => {
                     
                 if (foundMatch === false) {
                     io.to(socket.id).emit("invalid-code");
-
-                    // socket.disconnect(true);
-                    // util.removeSocket(socket.id);
                 };         
             });
         },
         leaveGame: (socket) => {
             socket.on("leave-game", (gameId, leavingPlayer) => {
                 socket.leave(gameId);
-                // socket.disconnect(true);
-                
-                // util.removeSocket(socket.id);
                 util.removePlayer(leavingPlayer.id, gameId);
                 util.removeGameIfEmpty(gameId);
         
